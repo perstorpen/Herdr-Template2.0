@@ -46,6 +46,10 @@ check_system() {
   for pair in curl:curl git:git python3:python3 xz:xz-utils; do
     command -v "${pair%%:*}" >/dev/null 2>&1 || missing+=("${pair##*:}")
   done
+  # Node needs these libraries, and a fresh Ubuntu (24.04 in WSL, for one) comes without libatomic.
+  for pair in libatomic.so.1:libatomic1 libstdc++.so.6:libstdc++6; do
+    ldconfig -p 2>/dev/null | grep -q "${pair%%:*}" || missing+=("${pair##*:}")
+  done
   [ "${#missing[@]}" -eq 0 ] && return 0
   say "Installerar ${missing[*]} (frågar efter ditt Ubuntu-lösenord)"
   sudo apt-get update
@@ -58,7 +62,12 @@ add_local_bin_to_path() {
 }
 
 # Node 22 or later has what the template needs. One that is already there is used.
-node_ok() { command -v node >/dev/null 2>&1 && [ "$(node -p 'process.versions.node.split(".")[0]')" -ge 22 ]; }
+# A node that is there but can't start (a library missing) counts as missing.
+node_ok() {
+  local major
+  major="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null)" || return 1
+  [ -n "$major" ] && [ "$major" -ge 22 ]
+}
 
 install_node() {
   node_ok && return 0
