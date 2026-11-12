@@ -39,4 +39,5 @@ shows them the CHANGELOG sections that are new to them. So for every change peop
 | Status line, counter, update notice | `statusline/statusline.js` |
 | Buttons under the prompt | `mod/` (a Claude Code mod; tests with `claude plugin test mod`) |
 | `info`, `uppdatera`, `pause`, `agent`, `time` | `hooks/` |
+| The task clock behind `Uppdrag` in the status line | `hooks/clock.js` (started at a prompt, stopped by the Stop hook) |
 | herdr's look | `config/herdr-config.toml` |

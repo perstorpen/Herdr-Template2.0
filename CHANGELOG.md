@@ -2,6 +2,13 @@
 
 Den nyaste versionen står först. Skriv `uppdatera` i en chatt för att hämta den.
 
+## 2.4.0 – 2026-11-12
+
+- Statusraden visar `Uppdrag` och tiden chatten har jobbat med det du senast skrev, i stället för hur länge hela chatten har pågått.
+- Tiden stannar när chatten är färdig och står kvar tills du skriver något nytt. Då börjar den om från noll.
+- Kommandon som `info`, `to do` och `pause` räknas inte som ett nytt uppdrag, så tiden står kvar.
+- En chatt som redan är öppen kan behöva startas om innan den visar den nya tiden.
+
 ## 2.3.0 – 2026-11-12
 
 - En röd punkt i Kontroll blir gul när en chatt börjar rätta den, som i To Do List. Då ser du vad som håller på att rättas.

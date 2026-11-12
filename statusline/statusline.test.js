@@ -177,6 +177,26 @@ test('shows every stat from a full session JSON', () => {
   }
 });
 
+test('shows the time worked on what the user last wrote, standing still once the chat has stopped', () => {
+  const s = sandbox();
+  const dir = path.join(s.data, 'clock');
+  fs.mkdirSync(dir, { recursive: true });
+  const clock = one => fs.writeFileSync(path.join(dir, 's1.json'), JSON.stringify(one));
+  const input = { session_id: 's1', cost: { total_duration_ms: 3900000 } };
+  assert.match(run(s, input), / 1h 5m/, 'no clock yet: the session time');
+  clock({ workedMs: 0, runningSince: Date.now() - 54 * 60000 });
+  assert.match(run(s, input), /Uppdrag 54m/, 'running');
+  clock({ workedMs: 63 * 60000, runningSince: null });
+  assert.match(run(s, input), /Uppdrag 1h 3m/, 'stopped: the time stays');
+  assert.match(run(s, { ...input, session_id: 'other' }), / 1h 5m/);
+  // Broken off with Esc three minutes in, a long time ago.
+  const started = Date.now() - 500 * 60000;
+  const transcript = path.join(s.home, 't.jsonl');
+  fs.writeFileSync(transcript, JSON.stringify({ type: 'user', timestamp: new Date(started + 3 * 60000).toISOString(), message: { content: '[Request interrupted by user]' } }) + '\n');
+  clock({ workedMs: 0, runningSince: started });
+  assert.match(run(s, { ...input, transcript_path: transcript }), /Uppdrag 3m/);
+});
+
 test('values each token type at the model price', () => {
   const s = sandbox();
   fs.writeFileSync(path.join(s.proj, 'a.jsonl'), priced('m1', 's1', 'claude-opus-5-5', {

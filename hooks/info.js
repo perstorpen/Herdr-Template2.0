@@ -58,7 +58,9 @@ KNAPPARNA UNDER SKRIVRUTAN
   månad                    Fäller ut tokens och dollar för varje månad. Tryck igen för att stänga.
 
 STATUSRADEN
-  Rad 1   Modellen, mappen, git-grenen, tiden och raderna som ändrats.
+  Rad 1   Modellen, mappen, git-grenen, Uppdrag och raderna som ändrats.
+          Uppdrag är tiden chatten jobbat med det du senast skrev. Den stannar när chatten är färdig
+          och står kvar tills du skriver något nytt.
   Rad 2   Kontext: hur full chatten är.  Månad: tokens och dollar den här månaden.
   Rad 3   Session (5 timmar) och Vecka: hur mycket av ditt Claude-abonnemang som är använt, och när det fylls på.
   Färgen går från grönt via gult till rött: Session och Vecka från 50 %, Kontext från 250k tokens (helt röd från 400k).

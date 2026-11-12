@@ -200,7 +200,7 @@ Mallen färgar också dina egna meddelanden gröna och skriver **✔ KLAR** när
 ### Statusraden
 
 ```
- Claude │ mitt-projekt main │ 12m │ +40 −3
+ Claude │ mitt-projekt main │ Uppdrag 12m │ +40 −3
  Kontext ██░░░░░░░░ 21% 210k/1.0M │ Månad nov 41.2M ≈ $18.40
  Session ███████░░░ 70% 14:20 │ Vecka ███░░░░░░░ 31% fre 09:00 · prognos 72%
  Totalt 41.2M ≈ $18.40 288 L (↑2.1M ↓0.4M cache 38.7M) │ Chatt 3.4M ≈ $1.90 24 L │ 6 chattar
@@ -208,7 +208,7 @@ Mallen färgar också dina egna meddelanden gröna och skriver **✔ KLAR** när
 
 | Rad | Visar |
 |---|---|
-| 1 | Modellen och effort, mappen och git-grenen, hur länge chatten har pågått, och rader som lagts till och tagits bort. |
+| 1 | Modellen och effort, mappen och git-grenen, **Uppdrag**, och rader som lagts till och tagits bort. Uppdrag är tiden chatten har jobbat med det du senast skrev: den stannar när chatten är färdig och står kvar tills du skriver något nytt. |
 | 2 | **Kontext**: hur full chatten är. Blir den full, tryck `/compact`. **Månad**: tokens och dollar den här kalendermånaden. |
 | 3 | **Session** (5 timmar) och **Vecka**: hur mycket av abonnemanget som är använt och när det fylls på. `prognos` är var veckan landar i nuvarande takt. |
 | 4 | **Totalt**: alla tokens sedan installationen, i dollar och i kylvatten för datahallen. **Chatt**: bara den här chatten. |
@@ -280,7 +280,7 @@ Mallen kan hämtas och användas av vem som helst. Ändringar i själva repot p�
 | Statusraden och räknaren | `statusline/statusline.js` |
 | Knapparna under skrivrutan | `mod/` (en mod för Claude Code) |
 | Kontroll och `kontroll genomgång` | `kontroll/kontroll.js` |
-| `info`, `uppdatera`, `pause`, `agent`, `time` | `hooks/` |
+| `info`, `uppdatera`, `pause`, `agent`, `time`, klockan bakom Uppdrag | `hooks/` |
 | Versionen och vad som är nytt | `version.txt`, `CHANGELOG.md` |
 | herdrs utseende | `config/herdr-config.toml` |
 

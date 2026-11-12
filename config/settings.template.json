@@ -16,7 +16,11 @@
       { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/kontroll/kontroll.js hook", "timeout": 10 }] },
       { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/pause.js prompt", "timeout": 10 }] },
       { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/time.js", "timeout": 20 }] },
-      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/agent.js", "timeout": 10 }] }
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/agent.js", "timeout": 10 }] },
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/clock.js prompt", "timeout": 10 }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/clock.js stop", "timeout": 10 }] }
     ],
     "PreToolUse": [
       { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/pause.js tool", "timeout": 10 }] }

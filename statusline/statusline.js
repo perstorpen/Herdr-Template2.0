@@ -21,6 +21,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+const taskClock = require('../hooks/clock.js');
+
 const HOME = os.homedir();
 const DATA = process.env.HERDR_TEMPLATE_DATA || path.join(HOME, '.claude', 'herdr-template');
 const DIR = path.join(DATA, 'statusline');
@@ -569,6 +571,15 @@ function chatEffort(input) {
   }
 }
 
+// The time worked on what the user last wrote, kept by hooks/clock.js: it runs while the chat works, stops when the chat
+// has ended its turn and stands there until the next prompt. A chat with no clock yet shows the session's time.
+function taskTime(input, now = Date.now()) {
+  const clock = taskClock.readClock(input.session_id);
+  if (!clock) return null;
+  const brokenOffAt = clock.runningSince ? taskClock.interruptedAt(input.transcript_path) : null;
+  return `Uppdrag ${duration(taskClock.shownMs(clock, now, brokenOffAt))}`;
+}
+
 function render(input, ledger) {
   const dir = (input.workspace && (input.workspace.project_dir || input.workspace.current_dir)) || input.cwd || process.cwd();
   const branch = gitBranch(dir);
@@ -579,7 +590,7 @@ function render(input, ledger) {
   const first = [
     c.cyan(c.bold(`${ICON.model} ${model}`)) + (effort ? c.dim(` · ${effort}`) : ''),
     `${c.dim(ICON.folder)} ${path.basename(dir)}` + (branch ? c.dim(` ${ICON.branch} ${branch}`) : ''),
-    `${c.dim(ICON.time)} ${duration(cost.total_duration_ms)}`,
+    `${c.dim(ICON.time)} ${taskTime(input) ?? duration(cost.total_duration_ms)}`,
     `${c.green(`+${cost.total_lines_added || 0}`)} ${c.red(`−${cost.total_lines_removed || 0}`)}`,
   ];
   let newer = null;
