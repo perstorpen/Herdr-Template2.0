@@ -27,6 +27,7 @@ language (Swedish if they wrote Swedish), in short plain sentences, and tell the
    - Then type `herdr-template ~/mitt-projekt` (any folder name works; it is made if missing).
    - In the first chat, answer yes when Claude asks if they trust the folder.
    - Type `info` in a chat to see every command.
+   - Later versions: the status line says when there is one, and typing `uppdatera` in a chat takes it.
    Do not start herdr yourself: it is a full-screen program and must run in their own window.
 
 ## Removing the template

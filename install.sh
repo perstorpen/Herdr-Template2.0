@@ -47,10 +47,19 @@ check_system() {
     command -v "${pair%%:*}" >/dev/null 2>&1 || missing+=("${pair##*:}")
   done
   # Node needs these libraries, and a fresh Ubuntu (24.04 in WSL, for one) comes without libatomic.
+  # ldconfig is in /sbin, which is not on every PATH.
+  local ldconfig
+  ldconfig="$(command -v ldconfig || echo /sbin/ldconfig)"
   for pair in libatomic.so.1:libatomic1 libstdc++.so.6:libstdc++6; do
-    ldconfig -p 2>/dev/null | grep -q "${pair%%:*}" || missing+=("${pair##*:}")
+    "$ldconfig" -p 2>/dev/null | grep -q "${pair%%:*}" || missing+=("${pair##*:}")
   done
   [ "${#missing[@]}" -eq 0 ] && return 0
+  local line="sudo apt update && sudo apt install -y ${missing[*]}"
+  # Run by Claude (or anything else without a terminal), sudo can't ask for the password.
+  if ! sudo -n true 2>/dev/null && [ ! -t 0 ]; then
+    fail "Det här behöver ditt lösenord, så du kör det själv i Ubuntu och sedan installationen igen:
+   $line"
+  fi
   say "Installerar ${missing[*]} (frågar efter ditt Ubuntu-lösenord)"
   sudo apt-get update
   sudo apt-get install -y "${missing[@]}"

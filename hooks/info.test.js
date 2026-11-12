@@ -20,7 +20,7 @@ test('only the bare word is the command', () => {
 });
 
 test('every command a hook answers to is described', () => {
-  for (const word of ['info', 'to do', 'do list', 'gör punkt', 'agent 2', 'agent 0', 'agent rec', 'time', 'pause 90', 'pause off', 'pause on', 'fortsätt', '/compact', 'xhigh', 'månad', 'To Do List']) {
+  for (const word of ['info', 'to do', 'do list', 'gör punkt', 'agent 2', 'agent 0', 'agent rec', 'time', 'pause 90', 'pause off', 'pause on', 'fortsätt', '/compact', 'xhigh', 'månad', 'To Do List', 'Kontroll', 'kontroll genomgång', 'uppdatera']) {
     assert.ok(INFO.includes(word), word);
   }
 });
@@ -28,4 +28,6 @@ test('every command a hook answers to is described', () => {
 test('the settings run this hook', () => {
   const template = fs.readFileSync(path.join(__dirname, '..', 'config', 'settings.template.json'), 'utf8');
   assert.match(template, /hooks\/info\.js/);
+  assert.match(template, /hooks\/update\.js/);
+  assert.match(template, /kontroll\/kontroll\.js hook/);
 });

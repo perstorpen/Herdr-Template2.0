@@ -299,6 +299,72 @@ function revalueInBackground() {
   require('child_process').spawn(process.execPath, [__filename, 'revalue'], { detached: true, stdio: 'ignore' }).unref();
 }
 
+// ---- A new version of the template ----
+
+// The template's own folder, whose remote the check fetches. Tests point it at a repo of their own.
+const TEMPLATE_REPO = process.env.HERDR_TEMPLATE_REPO || path.join(__dirname, '..');
+const UPDATE_FILE = path.join(DATA, 'update.json');
+const UPDATE_LOCK = path.join(DATA, '.update-check-lock');
+const UPDATE_EVERY_MS = 6 * 60 * 60 * 1000;
+
+// -1, 0 or 1, comparing versions such as 2.0.0 and 2.1.0 number by number.
+function compareVersions(a, b) {
+  const pa = String(a).trim().split('.').map(Number);
+  const pb = String(b).trim().split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i += 1) {
+    const x = pa[i] || 0;
+    const y = pb[i] || 0;
+    if (x !== y) return x > y ? 1 : -1;
+  }
+  return 0;
+}
+const isVersion = text => /^\d+(\.\d+){0,3}$/.test(String(text || '').trim());
+
+function localVersion() {
+  try { return fs.readFileSync(path.join(TEMPLATE_REPO, 'version.txt'), 'utf8').trim(); } catch { return null; }
+}
+
+function readUpdate() {
+  try { return JSON.parse(fs.readFileSync(UPDATE_FILE, 'utf8')); } catch { return null; }
+}
+
+// The newer version on GitHub, or null: compared with the version in the folder now, so the notice goes the moment
+// the template is updated.
+function newerVersion() {
+  const known = readUpdate();
+  const local = localVersion();
+  if (!known || !isVersion(known.remote) || !isVersion(local)) return null;
+  return compareVersions(known.remote, local) > 0 ? known.remote.trim() : null;
+}
+
+// Fetches and reads the version on GitHub. Run in a process of its own, never by the status line itself.
+function checkForUpdate() {
+  const git = (...args) => require('child_process').spawnSync('git', ['-C', TEMPLATE_REPO, ...args], { encoding: 'utf8', timeout: 60000 });
+  let remote = null;
+  if (git('fetch', '--quiet', 'origin').status === 0) {
+    const shown = git('show', 'origin/main:version.txt');
+    if (shown.status === 0 && isVersion(shown.stdout)) remote = shown.stdout.trim();
+  }
+  const result = { checkedAt: new Date().toISOString(), local: localVersion(), remote };
+  fs.mkdirSync(DATA, { recursive: true });
+  const tmp = `${UPDATE_FILE}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(result));
+  fs.renameSync(tmp, UPDATE_FILE);
+  return result;
+}
+
+// At most once every six hours, and only one check at a time; a failed check waits the same six hours.
+function checkForUpdateInBackground(now = Date.now()) {
+  const known = readUpdate();
+  if (known && now - Date.parse(known.checkedAt) < UPDATE_EVERY_MS) return false;
+  fs.mkdirSync(DATA, { recursive: true });
+  try { fs.mkdirSync(UPDATE_LOCK); } catch {
+    try { if (now - fs.statSync(UPDATE_LOCK).mtimeMs < 5 * 60 * 1000) return false; } catch { return false; }
+  }
+  require('child_process').spawn(process.execPath, [__filename, 'check-update'], { detached: true, stdio: 'ignore' }).unref();
+  return true;
+}
+
 // ---- Month by month ----
 
 // A month is a calendar month, in this computer's time. The total rolls on for ever; a month starts again from
@@ -498,6 +564,9 @@ function render(input, ledger) {
     `${c.dim(ICON.time)} ${duration(cost.total_duration_ms)}`,
     `${c.green(`+${cost.total_lines_added || 0}`)} ${c.red(`−${cost.total_lines_removed || 0}`)}`,
   ];
+  let newer = null;
+  try { newer = newerVersion(); } catch { /* no notice */ }
+  if (newer) first.push(c.yellow(c.bold(`⬆ Ny version ${newer}: skriv uppdatera`)));
 
   const ctx = input.context_window || {};
   const pct = typeof ctx.used_percentage === 'number' ? Math.round(ctx.used_percentage) : 0;
@@ -550,6 +619,7 @@ function main() {
   try { ledger = updatedLedger(); } catch { ledger = emptyLedger(); }
   process.stdout.write(`${render(input, ledger)}\n`);
   try { if (ledger.priced !== PRICED && hasUnvalued(ledger)) revalueInBackground(); } catch { /* the next run tries again */ }
+  try { checkForUpdateInBackground(); } catch { /* the next run tries again */ }
 }
 
 if (require.main === module && process.argv[2] === 'revalue') {
@@ -559,8 +629,12 @@ if (require.main === module && process.argv[2] === 'revalue') {
   } finally {
     try { fs.rmdirSync(REVALUE_LOCK); } catch { /* not held */ }
   }
+} else if (require.main === module && process.argv[2] === 'check-update') {
+  try { checkForUpdate(); } finally {
+    try { fs.rmdirSync(UPDATE_LOCK); } catch { /* not held */ }
+  }
 } else if (require.main === module) {
   try { main(); } catch (err) { process.stdout.write(`statusline: ${err.message}\n`); }
 }
 
-module.exports = { months, monthKey, responseValue };
+module.exports = { months, monthKey, responseValue, compareVersions };

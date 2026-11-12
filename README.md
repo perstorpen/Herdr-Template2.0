@@ -7,13 +7,16 @@ chattar med Claude igång bredvid varandra, och lägger till det som gör dem l�
   uppdrag, så slipper de trampa på varandra.
 - **To Do List**, en egen flik med en lista som både du och chattarna kan använda. Skriv `to do ...` i en chatt så hamnar
   det på listan, och färga punkter lila för att låta en chatt göra dem.
+- **Kontroll**, en flik med punkter att kolla i det du bygger. Varje gång en chatt ändrar något lägger den upp var du
+  ska klicka och vad du ska se, och du svarar Bra eller Fel. Det du säger är fel rättas först.
 - **En räknare för tokens och dollar** i statusraden: hur mycket den här chatten, den här månaden och allt sedan
   installationen har använt, plus hur mycket av ditt Claude-abonnemang som är kvar.
 - **Knappar under skrivrutan**: `/compact`, hur mycket Opus ska tänka (`low` till `max`) och `månad`, som visar
   tokens och dollar för varje månad.
 - **Paus vid 95 %**: när nästan hela sessionen (5-timmarsfönstret) är använd stannar chattarna, så att det sista räcker
   till småsaker. Du väljer själv vilken chatt som får fortsätta.
-- **Kommandona** `info`, `to do`, `do list`, `gör punkt N`, `agent`, `time` och `pause`. Skriv `info` i en chatt för att
+- **Uppdateringar med ett ord**: statusraden säger till när det finns en ny version, och `uppdatera` hämtar den.
+- **Kommandona** `info`, `uppdatera`, `kontroll genomgång`, `to do`, `do list`, `gör punkt N`, `agent`, `time` och `pause`. Skriv `info` i en chatt för att
   se alla.
 
 Allt börjar tomt: listan, räknaren och månaderna fylls när du använder mallen.
@@ -96,7 +99,7 @@ herdr-template ~/mitt-projekt
 
 `mitt-projekt` är mappen chattarna jobbar i. Välj vilket namn du vill; den skapas om den inte finns.
 
-herdr öppnas med flikarna **Main Building · Interface · Questions · Side Quests · To Do List**. Svara **ja** när en
+herdr öppnas med flikarna **Main Building · Interface · Questions · Side Quests · To Do List · Kontroll**. Svara **ja** när en
 chatt frågar om du litar på mappen, och skriv **`info`** för att se alla kommandon.
 
 Nästa gång skriver du samma rad igen, och allt öppnas som du lämnade det.
@@ -114,6 +117,7 @@ Nästa gång skriver du samma rad igen, och allt öppnas som du lämnade det.
 | Questions | Frågor och förklaringar, utan att störa de andra. |
 | Side Quests | Det som kommer upp på vägen och inte ska blanda sig med huvudarbetet. |
 | To Do List | Listan. Klicka på en punkt för att se förklaringen och välja färg. |
+| Kontroll | Punkter att kolla i det du bygger. Klicka Bra eller Fel. |
 
 Alla fyra är vanliga Claude Code-chattar. Namnen är bara ett förslag på hur du delar upp arbetet. Byt flik med musen
 eller **Tab**.
@@ -125,6 +129,8 @@ Skriv dem som ett eget meddelande i en chatt.
 | Skriv | Vad som händer |
 |---|---|
 | `info` | Visar vad mallen är och alla kommandon. Kostar inga tokens. |
+| `uppdatera` | Hämtar den nyaste versionen av mallen och visar vad som är nytt. Kostar inga tokens. |
+| `kontroll genomgång` | Chatten går igenom hela systemet du bygger och lägger upp punkter i Kontroll för allt som finns. Gör det en gång, när du börjar använda Kontroll. |
 | `to do <vad som ska göras>` | Lägger det på To Do List i stället för att skicka det till chatten. Flera saker i samma meddelande blir flera punkter. Claude Haiku skriver en kort titel och en förklaring till varje punkt. |
 | `do list` | Chatten gör alla punkter du har färgat lila. Finns inga lila händer inget. |
 | `gör punkt 3` | Chatten gör punkt 3 (vilket nummer som helst). |
@@ -151,6 +157,30 @@ Varje agent drar av din användning.
 Chattarna sätter gult och blått själva. I fliken: pil upp och ner väljer, mellanslag eller Enter öppnar en punkt, pil
 vänster och höger byter färg och Esc stänger. **Ctrl+Z** ångrar, **Rensa klara** tar bort de gröna, och mushjulet
 skrollar.
+
+### Kontroll
+
+Kontroll är till för att du ska veta att det chattarna bygger faktiskt fungerar, utan att läsa koden.
+
+1. **Första gången:** skriv `kontroll genomgång` i en chatt. Den läser igenom systemet och lägger upp en punkt för varje
+   sak du kan kolla, grupperade efter systemets egna delar (flikar, sidor, menyer). I ett stort system tar det en stund.
+2. **Sedan av sig själv:** varje gång en chatt ändrar något du kan se eller göra, lägger den upp nya punkter och räknar
+   upp dem i slutet av sitt svar.
+3. **Du går igenom dem** i fliken Kontroll: klicka på en grupp för att öppna den, och på en punkt för att svara.
+   Varje punkt säger vad som ändrades, var du ska klicka och vad du ska se.
+
+| Färg | Betyder |
+|---|---|
+| Vit | Inte kollad än. |
+| Grön | Du har sagt **Bra**. |
+| Röd | Du har sagt **Fel** och skrivit vad som var fel. Chattarna rättar röda punkter innan de bygger något nytt i samma del. |
+| Blå | En chatt har rättat det du sa var fel. Kolla igen. |
+
+Bara du sätter grönt och rött. En chatt kan också prova en punkt själv och skriva vad den såg, som en anteckning bredvid
+punkten. Det är inget svar. Du kan även svara i en chatt, till exempel `K3 är fel, knappen syns inte`.
+
+Listan sparas i projektmappen som `kontroll.jsonl`. Ligger projektet i git följer den med, så alla som jobbar med
+projektet ser samma punkter. Punkterna skrivs på samma språk som systemets egna sidor och knappar.
 
 ### Knapparna under skrivrutan
 
@@ -183,19 +213,24 @@ vad ditt abonnemang kostar. Räknaren läser chattarnas egna loggar på den här
 
 ---
 
-## Uppdatera eller ta bort
+## Uppdatera
 
-Starta `claude` i Ubuntu och klistra in en av meningarna:
+När det finns en ny version visar statusraden **⬆ Ny version: skriv uppdatera**. Skriv då i en chatt:
 
 ```
-Uppdatera Herdr-Template2.0 åt mig. Följ instruktionerna i https://raw.githubusercontent.com/perstorpen/Herdr-Template2.0/main/lib/claude-install.md
+uppdatera
 ```
+
+Mallen hämtar den nya versionen, installerar den och visar vad som är nytt. Stäng sedan Windows Terminal och starta
+mallen igen. Din lista, Kontroll och räknaren påverkas inte. Allt som har ändrats står i [CHANGELOG.md](CHANGELOG.md).
+
+## Ta bort
+
+Starta `claude` i Ubuntu och klistra in:
 
 ```
 Ta bort Herdr-Template2.0 åt mig. Följ instruktionerna i https://raw.githubusercontent.com/perstorpen/Herdr-Template2.0/main/lib/claude-install.md
 ```
-
-Efter en uppdatering: stäng Windows Terminal och starta mallen igen. Din lista och räknaren påverkas inte.
 
 ---
 
@@ -203,7 +238,7 @@ Efter en uppdatering: stäng Windows Terminal och starta mallen igen. Din lista 
 
 | Problem | Gör så här |
 |---|---|
-| Ikonerna i statusraden är rutor eller frågetecken | Teckensnittet saknas. Be Claude uppdatera mallen (meningen ovan), starta om Windows Terminal, och kontrollera under Inställningar → Ubuntu → Utseende att teckensnittet är *CaskaydiaMono NF*. På Linux: installera en [Nerd Font](https://www.nerdfonts.com) och välj den i terminalen. |
+| Ikonerna i statusraden är rutor eller frågetecken | Teckensnittet saknas. Be Claude installera mallen igen (meningen i steg 4), starta om Windows Terminal, och kontrollera under Inställningar → Ubuntu → Utseende att teckensnittet är *CaskaydiaMono NF*. På Linux: installera en [Nerd Font](https://www.nerdfonts.com) och välj den i terminalen. |
 | `herdr-template: command not found` | Starta om terminalen. Hjälper det inte: `source ~/.bashrc`. |
 | Statusraden visar `väntar på data` vid Session och Vecka | Det visas tills chatten har fått sitt första svar. Med en API-nyckel i stället för ett abonnemang kommer de raderna aldrig. |
 | Knapparna under skrivrutan syns inte | Starta en ny chatt (`/exit` och sedan `claude`, eller starta om mallen). Kontrollera att `CLAUDE_CODE_PLUGIN_DIRS` i `~/.claude/settings.json` pekar på `~/Herdr-Template2.0/mod`. |
@@ -211,14 +246,15 @@ Efter en uppdatering: stäng Windows Terminal och starta mallen igen. Din lista 
 | En chatt säger att den är pausad | Över 95 % av sessionen är använd. Skriv `fortsätt` för att låta den jobba ändå, eller `pause off` för att stänga av pausen. |
 | `Could not resolve host: github.com` | Ubuntu har tappat nätverket, vanligt i en nyinstallerad WSL. Skriv `wsl --shutdown` i PowerShell, öppna Ubuntu igen och prova på nytt. |
 | `claude: command not found` | Stäng Ubuntu och öppna den igen. |
-| Något annat | Be Claude uppdatera mallen (meningen ovan). Det rättar det som saknas och rör inte din lista eller räknaren. |
+| Något annat | Be Claude installera mallen igen (meningen i steg 4). Det rättar det som saknas och rör inte dina listor eller räknaren. |
 
 ## Var allt ligger
 
 | Vad | Var |
 |---|---|
 | Mallen själv | `~/Herdr-Template2.0` |
-| Listan, räknaren, månaderna, pausens inställning, effort per chatt | `~/.claude/herdr-template/` |
+| To Do List, räknaren, månaderna, pausens inställning, effort per chatt | `~/.claude/herdr-template/` |
+| Kontroll | `kontroll.jsonl` i projektmappen |
 | Claude Codes inställningar, som mallen lagt till i | `~/.claude/settings.json` |
 | herdrs utseende | `~/.config/herdr/config.toml` |
 | Säkerhetskopior från installationen | `~/.herdr-template-backups/` |
@@ -235,7 +271,9 @@ Mallen kan hämtas och användas av vem som helst. Ändringar i själva repot p�
 | To Do List och kommandot `to do` | `todo/todo.js` |
 | Statusraden och räknaren | `statusline/statusline.js` |
 | Knapparna under skrivrutan | `mod/` (en mod för Claude Code) |
-| `info`, `pause`, `agent`, `time` | `hooks/` |
+| Kontroll och `kontroll genomgång` | `kontroll/kontroll.js` |
+| `info`, `uppdatera`, `pause`, `agent`, `time` | `hooks/` |
+| Versionen och vad som är nytt | `version.txt`, `CHANGELOG.md` |
 | herdrs utseende | `config/herdr-config.toml` |
 
 Testerna: `./test.sh`.

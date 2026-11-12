@@ -5,8 +5,8 @@
 #
 # The folder is where the chats work (the current folder when none is given). herdr opens in a session of its own,
 # named after the folder unless a name is given, with one space and these tabs, in this order:
-#   Main Building · Interface · Questions · Side Quests · To Do List
-# The four chats start Claude Code in the folder; To Do List is the list's own window. Run it again to open the
+#   Main Building · Interface · Questions · Side Quests · To Do List · Kontroll
+# The four chats start Claude Code in the folder; To Do List and Kontroll are the lists' own windows. Run it again to open the
 # session again: missing tabs are made, and what isn't running is started. Nothing is written in the folder.
 set -uo pipefail
 
@@ -27,8 +27,9 @@ session=$(tr -c 'a-zA-Z0-9_-' '-' <<<"$name" | sed 's/-*$//')
 [ -n "$session" ] || session=template
 
 CHATS=("Main Building" "Interface" "Questions" "Side Quests")
-LIST="To Do List"
-ORDER=("${CHATS[@]}" "$LIST")
+# The windows that are not chats, and the program each runs.
+declare -A WINDOWS=(["To Do List"]="$repo/todo/todo.js" [Kontroll]="$repo/kontroll/kontroll.js")
+ORDER=("${CHATS[@]}" "To Do List" Kontroll)
 
 h() { "$herdr" --session "$session" "$@" 2>/dev/null; }
 field() { "$node" -e "$1" "${@:2}" 2>/dev/null; }
@@ -69,8 +70,8 @@ build() {
     tab=$(tabOf "$label"); [ -n "$tab" ] || continue
     read -r pane agent title <<<"$(paneOf "$tab")"
     [ -n "${pane:-}" ] || continue
-    if [ "$label" = "$LIST" ]; then
-      [ "$agent" = - ] && [ "$title" != "$LIST" ] && h pane run "$pane" "cd '$folder' && exec '$node' '$repo/todo/todo.js' ui" >/dev/null
+    if [ -n "${WINDOWS[$label]:-}" ]; then
+      [ "$agent" = - ] && [ "$title" != "$label" ] && h pane run "$pane" "cd '$folder' && exec '$node' '${WINDOWS[$label]}' ui" >/dev/null
     elif [ "$agent" = - ]; then
       h pane run "$pane" "cd '$folder' && claude" >/dev/null
     fi

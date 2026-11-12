@@ -89,3 +89,10 @@ test('the hook prints nothing for info, or inside the to do list\'s own model ca
   assert.strictEqual(runHook('info').stdout, '');
   assert.strictEqual(runHook('fixa bilderna', { TODO_WORKER: '1' }).stdout, '');
 });
+
+test('the update command is left to its own hook', () => {
+  const { isHandledElsewhere } = require('./agent.js');
+  for (const prompt of ['uppdatera', 'Uppdatera mallen', 'update']) assert.ok(isHandledElsewhere(prompt), prompt);
+  assert.ok(!isHandledElsewhere('uppdatera sidan med nya färger'));
+  assert.ok(!isHandledElsewhere('kontroll genomgång'), 'the walkthrough is work, so the chat may choose agents');
+});

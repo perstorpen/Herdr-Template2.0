@@ -11,7 +11,9 @@
   "hooks": {
     "UserPromptSubmit": [
       { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/info.js", "timeout": 10 }] },
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/update.js", "timeout": 300, "statusMessage": "Uppdaterar mallen …" }] },
       { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/todo/todo.js hook", "timeout": 30 }] },
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/kontroll/kontroll.js hook", "timeout": 10 }] },
       { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/pause.js prompt", "timeout": 10 }] },
       { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/time.js", "timeout": 20 }] },
       { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/agent.js", "timeout": 10 }] }

@@ -27,6 +27,8 @@ function envOf(s, more = {}) {
   const env = { ...process.env, HOME: s.home, STATUSLINE_WINDOWS_USERS: path.join(s.home, 'no-windows'), ...more };
   delete env.CLAUDE_CONFIG_DIR;
   if (!('HERDR_TEMPLATE_DATA' in more)) delete env.HERDR_TEMPLATE_DATA;
+  // Never the real template folder: a check for a new version would fetch from its GitHub remote.
+  if (!('HERDR_TEMPLATE_REPO' in more)) env.HERDR_TEMPLATE_REPO = path.join(s.home, 'no-template');
   return env;
 }
 const line = (id, session, input, cc, cr, output) => JSON.stringify({ type: 'assistant', sessionId: session, message: { id, usage: { input_tokens: input, cache_creation_input_tokens: cc, cache_read_input_tokens: cr, output_tokens: output } } }) + '\n';
@@ -448,4 +450,106 @@ test('HERDR_TEMPLATE_DATA moves everything the status line keeps', () => {
     assert.ok(fs.existsSync(path.join(elsewhere, file)), file);
   }
   assert.ok(!fs.existsSync(s.ledger), 'nothing in the default place');
+});
+
+// ---- A new version of the template ----
+
+// A bare "GitHub" with the template's version file, and a clone of it as the installed template.
+function templateRepos(s, version) {
+  const git = (cwd, ...args) => {
+    const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { cwd, encoding: 'utf8' });
+    assert.strictEqual(r.status, 0, r.stderr);
+  };
+  const origin = path.join(s.home, 'origin.git');
+  const work = path.join(s.home, 'work');
+  const repo = path.join(s.home, 'template');
+  git(s.home, 'init', '-q', '--bare', '-b', 'main', origin);
+  git(s.home, 'clone', '-q', origin, work);
+  fs.writeFileSync(path.join(work, 'version.txt'), `${version}\n`);
+  git(work, 'add', '.');
+  git(work, 'commit', '-qm', version);
+  git(work, 'push', '-q', 'origin', 'HEAD:main');
+  git(s.home, 'clone', '-q', origin, repo);
+  const release = next => {
+    fs.writeFileSync(path.join(work, 'version.txt'), `${next}\n`);
+    git(work, 'commit', '-qam', next);
+    git(work, 'push', '-q', 'origin', 'HEAD:main');
+  };
+  return { repo, release };
+}
+const seedUpdate = (s, update) => fs.writeFileSync(path.join(s.data, 'update.json'), JSON.stringify(update));
+const firstLine = out => out.split('\n')[0];
+const recently = () => new Date().toISOString();
+
+test('a newer version on GitHub shows a notice at the end of the first line', () => {
+  const s = sandbox();
+  const { repo } = templateRepos(s, '2.0.0');
+  seedUpdate(s, { checkedAt: recently(), local: '2.0.0', remote: '2.1.0' });
+  assert.match(firstLine(run(s, {}, { HERDR_TEMPLATE_REPO: repo })), /│ ⬆ Ny version 2\.1\.0: skriv uppdatera$/);
+});
+
+test('no notice when the template is up to date, newer than GitHub, or nothing is known', () => {
+  const s = sandbox();
+  const { repo } = templateRepos(s, '2.1.0');
+  for (const remote of ['2.1.0', '2.0.9', null, 'garbage']) {
+    seedUpdate(s, { checkedAt: recently(), local: '2.1.0', remote });
+    assert.doesNotMatch(run(s, {}, { HERDR_TEMPLATE_REPO: repo }), /Ny version/, String(remote));
+  }
+  fs.rmSync(path.join(s.data, 'update.json'));
+  fs.writeFileSync(path.join(s.data, 'update.json'), '{broken');
+  assert.doesNotMatch(run(s, {}, { HERDR_TEMPLATE_DATA: s.data, HERDR_TEMPLATE_REPO: path.join(s.home, 'none') }), /Ny version/);
+});
+
+test('versions compare number by number', () => {
+  const { compareVersions } = require(SRC);
+  assert.strictEqual(compareVersions('2.10.0', '2.9.3'), 1);
+  assert.strictEqual(compareVersions('2.0', '2.0.0'), 0);
+  assert.strictEqual(compareVersions('1.9.9', '2.0.0'), -1);
+});
+
+test('the check fetches the version from GitHub, and the notice goes once the template is updated', () => {
+  const s = sandbox();
+  const { repo, release } = templateRepos(s, '2.0.0');
+  release('2.1.0');
+  const env = envOf(s, { HERDR_TEMPLATE_REPO: repo });
+  const r = spawnSync('node', [SRC, 'check-update'], { env, encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  const update = JSON.parse(fs.readFileSync(path.join(s.data, 'update.json'), 'utf8'));
+  assert.deepStrictEqual([update.local, update.remote], ['2.0.0', '2.1.0']);
+  assert.match(run(s, {}, { HERDR_TEMPLATE_REPO: repo }), /Ny version 2\.1\.0/);
+  spawnSync('git', ['-C', repo, 'pull', '-q', '--ff-only'], { encoding: 'utf8' });
+  assert.doesNotMatch(run(s, {}, { HERDR_TEMPLATE_REPO: repo }), /Ny version/, 'gone as soon as version.txt is new');
+});
+
+test('offline, the check writes that nothing is known and shows no notice', () => {
+  const s = sandbox();
+  const env = envOf(s, { HERDR_TEMPLATE_REPO: path.join(s.home, 'not-a-repo') });
+  assert.strictEqual(spawnSync('node', [SRC, 'check-update'], { env, encoding: 'utf8' }).status, 0);
+  const update = JSON.parse(fs.readFileSync(path.join(s.data, 'update.json'), 'utf8'));
+  assert.strictEqual(update.remote, null);
+  assert.ok(Date.parse(update.checkedAt) > Date.now() - 60000);
+});
+
+test('the status line starts a check only when the last one is over six hours old', async () => {
+  const s = sandbox();
+  const { repo, release } = templateRepos(s, '2.0.0');
+  release('2.2.0');
+  const file = path.join(s.data, 'update.json');
+  const settle = async () => {
+    for (let i = 0; i < 100 && fs.existsSync(path.join(s.data, '.update-check-lock')); i += 1) await new Promise(done => setTimeout(done, 100));
+  };
+  // Checked an hour ago: nothing is started, the file stays as it was.
+  const hourAgo = new Date(Date.now() - 3600e3).toISOString();
+  seedUpdate(s, { checkedAt: hourAgo, local: '2.0.0', remote: '2.0.0' });
+  run(s, {}, { HERDR_TEMPLATE_REPO: repo });
+  await new Promise(done => setTimeout(done, 1500));
+  await settle();
+  assert.strictEqual(JSON.parse(fs.readFileSync(file, 'utf8')).checkedAt, hourAgo);
+  // Seven hours ago: a check runs in the background and finds the new version.
+  seedUpdate(s, { checkedAt: new Date(Date.now() - 7 * 3600e3).toISOString(), local: '2.0.0', remote: '2.0.0' });
+  run(s, {}, { HERDR_TEMPLATE_REPO: repo });
+  for (let i = 0; i < 100 && JSON.parse(fs.readFileSync(file, 'utf8')).remote !== '2.2.0'; i += 1) await new Promise(done => setTimeout(done, 100));
+  await settle();
+  assert.strictEqual(JSON.parse(fs.readFileSync(file, 'utf8')).remote, '2.2.0');
+  assert.ok(!fs.existsSync(path.join(s.data, '.update-check-lock')));
 });

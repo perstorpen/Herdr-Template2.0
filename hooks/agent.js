@@ -17,10 +17,10 @@ const FIRST_LINE = `Your very first output, before any tool call, is one line in
 
 const CHOOSING = `Choose how many extra agents suit the task, counting what really runs in parallel and what the extra cost buys. Often that is 0: a small fix, one connected change, or changes to the same files. If you must ask the user something first, write \`Agenter: väljs efter dina svar\` instead, and choose after the answer.`;
 
-// Prompts the template's other commands, or Claude Code itself, handle: info, pause (and its forms), time, to do ...,
+// Prompts the template's other commands, or Claude Code itself, handle: info, uppdatera, pause (and its forms), time, to do ...,
 // do list, gör punkt N, slash commands and ! commands.
 const HANDLED_ELSEWHERE = [
-  /^\s*(?:info|time|do[\s-]?list(?:an)?)\s*[.!?]?\s*$/i,
+  /^\s*(?:info|time|do[\s-]?list(?:an)?|uppdatera(?:\s+mallen)?|update)\s*[.!?]?\s*$/i,
   /^\s*pause(?:\s+(?:off|av|on|på|\d{1,3})\s*%?)?\s*[.!]?\s*$/i,
   /^\s*to[\s-]?do\b/i,
   /^\s*gör\s+punkt(?:en|erna)?\s+\d/i,
