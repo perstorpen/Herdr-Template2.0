@@ -2,6 +2,12 @@
 
 Den nyaste versionen står först. Skriv `uppdatera` i en chatt för att hämta den.
 
+## 2.2.0 – 2026-11-12
+
+- Staplarna i statusraden byter färg gradvis från grönt via gult till rött i stället för i tre hopp.
+- Session och Vecka börjar gulna efter 50 % och är nästan helt röda vid 80 %.
+- Kontext börjar gulna efter 250k tokens och är helt röd från 400k. Då är det dags för `/compact`.
+
 ## 2.1.0 – 2026-11-12
 
 - Chattarna säger tydligt om de är färdiga eller inte. Medan agenter eller tester arbetar börjar meddelandet med en röd rad `PÅGÅENDE` och vad som körs.

@@ -459,11 +459,29 @@ function duration(ms) {
   return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 }
 
-const byLevel = (pct, text) => (pct >= 90 ? c.red : pct >= 70 ? c.yellow : c.green)(text);
+// How full a tracker is, as a colour that fades green → yellow → red. `heat` is 0 (green) to
+// 1 (red). The ends are the terminal's own green, yellow and red (Windows Terminal's Campbell).
+const GREEN = [19, 161, 14];
+const YELLOW = [193, 156, 0];
+const RED = [197, 15, 31];
+const clamp01 = n => Math.min(1, Math.max(0, n));
 
-function bar(pct) {
+function heatColour(heat) {
+  const t = clamp01(heat);
+  const [from, to, f] = t < 0.5 ? [GREEN, YELLOW, t * 2] : [YELLOW, RED, (t - 0.5) * 2];
+  return from.map((v, i) => Math.round(v + (to[i] - v) * f));
+}
+
+const byHeat = (heat, text) => `\x1b[38;2;${heatColour(heat).join(';')}m${text}\x1b[0m`;
+
+// Session and week: green up to 50 %, yellow at about 63 %, nearly red at 80 %, fully red from 85 %.
+const limitHeat = pct => clamp01((pct - 50) / 35);
+// The context, by the tokens in it: green up to 250k, then towards yellow, fully red from 400k.
+const contextHeat = inContext => clamp01((inContext - 250e3) / 150e3);
+
+function bar(pct, heat) {
   const filled = Math.min(10, Math.round(pct / 10));
-  return byLevel(pct, '█'.repeat(filled)) + c.dim('░'.repeat(10 - filled));
+  return byHeat(heat, '█'.repeat(filled)) + c.dim('░'.repeat(10 - filled));
 }
 
 function resetTime(epochSeconds, withDay) {
@@ -487,7 +505,7 @@ function weekForecast(window, now = Date.now()) {
   const used = Math.max(0, window.used_percentage);
   const forecast = Math.round(used * WEEK_MS / elapsed);
   const text = `prognos ${forecast}%`;
-  if (forecast <= 100) return ` ${c.dim('·')} ${byLevel(forecast, text)}`;
+  if (forecast <= 100) return ` ${c.dim('·')} ${byHeat(limitHeat(forecast), text)}`;
   const runsOut = new Date(end - WEEK_MS + elapsed * 100 / used);
   const at = `${runsOut.toLocaleDateString('sv-SE', { weekday: 'short' })} ${runsOut.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`;
   return ` ${c.dim('·')} ${c.red(`${text}, slut ${at}`)}`;
@@ -495,12 +513,12 @@ function weekForecast(window, now = Date.now()) {
 
 // A bar for a plan limit. Claude Code only sends the limits on some plans, and after the first response.
 function limitBar(label, window, withDay, forecast = false) {
-  if (!window || typeof window.used_percentage !== 'number') return `${c.dim(label)} ${bar(0)} ${c.dim('väntar på data')}`;
+  if (!window || typeof window.used_percentage !== 'number') return `${c.dim(label)} ${bar(0, 0)} ${c.dim('väntar på data')}`;
   // The numbers only change with a response, so a window that has ended is shown as empty.
   const ended = window.resets_at && window.resets_at * 1000 <= Date.now();
   const pct = ended ? 0 : Math.min(100, Math.max(0, Math.round(window.used_percentage)));
   const ahead = forecast && !ended ? weekForecast(window) : '';
-  return `${c.dim(label)} ${bar(pct)} ${byLevel(pct, `${pct}%`)}${ended ? '' : resetTime(window.resets_at, withDay)}${ahead}`;
+  return `${c.dim(label)} ${bar(pct, limitHeat(pct))} ${byHeat(limitHeat(pct), `${pct}%`)}${ended ? '' : resetTime(window.resets_at, withDay)}${ahead}`;
 }
 
 function gitBranch(dir) {
@@ -576,7 +594,7 @@ function render(input, ledger) {
   const monthList = months(ledger);
   try { writeMonths(monthList); } catch { /* the line still shows */ }
   const second = [
-    `${c.dim(`${ICON.context} Kontext`)} ${bar(pct)} ${byLevel(pct, `${pct}%`)} ${c.dim(`${tokens(inContext)}/${tokens(ctx.context_window_size || 0)}`)}`,
+    `${c.dim(`${ICON.context} Kontext`)} ${bar(pct, contextHeat(inContext))} ${byHeat(contextHeat(inContext), `${pct}%`)} ${c.dim(`${tokens(inContext)}/${tokens(ctx.context_window_size || 0)}`)}`,
     monthSummary(monthList),
   ];
 
@@ -637,4 +655,4 @@ if (require.main === module && process.argv[2] === 'revalue') {
   try { main(); } catch (err) { process.stdout.write(`statusline: ${err.message}\n`); }
 }
 
-module.exports = { months, monthKey, responseValue, compareVersions };
+module.exports = { months, monthKey, responseValue, compareVersions, heatColour, limitHeat, contextHeat };

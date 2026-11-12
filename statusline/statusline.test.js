@@ -553,3 +553,29 @@ test('the status line starts a check only when the last one is over six hours ol
   assert.strictEqual(JSON.parse(fs.readFileSync(file, 'utf8')).remote, '2.2.0');
   assert.ok(!fs.existsSync(path.join(s.data, '.update-check-lock')));
 });
+
+test('the trackers fade from green through yellow to red', () => {
+  const { heatColour, limitHeat, contextHeat } = require('./statusline.js');
+  assert.deepStrictEqual(heatColour(0), [19, 161, 14]);
+  assert.deepStrictEqual(heatColour(0.5), [193, 156, 0]);
+  assert.deepStrictEqual(heatColour(1), [197, 15, 31]);
+  assert.strictEqual(limitHeat(50), 0);
+  assert.ok(limitHeat(80) > 0.8 && limitHeat(80) < 1, 'nearly red at 80 %');
+  assert.strictEqual(limitHeat(90), 1);
+  assert.strictEqual(contextHeat(250e3), 0);
+  assert.strictEqual(contextHeat(325e3), 0.5);
+  assert.strictEqual(contextHeat(400e3), 1);
+  assert.strictEqual(contextHeat(1e6), 1);
+});
+
+test('the bars carry the fade colour', () => {
+  const s = sandbox();
+  const input = {
+    session_id: 's1',
+    context_window: { used_percentage: 40, context_window_size: 1e6, current_usage: { input_tokens: 400e3 } },
+    rate_limits: { five_hour: { used_percentage: 20, resets_at: Date.now() / 1000 + 3600 } },
+  };
+  const r = spawnSync('node', [SRC], { input: JSON.stringify(input), env: envOf(s), encoding: 'utf8' });
+  assert.ok(r.stdout.includes('\x1b[38;2;197;15;31m40%'), 'the context at 400k is red');
+  assert.ok(r.stdout.includes('\x1b[38;2;19;161;14m20%'), 'the session at 20 % is green');
+});

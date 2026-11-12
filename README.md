@@ -212,6 +212,9 @@ Mallen färgar också dina egna meddelanden gröna och skriver **✔ KLAR** när
 | 3 | **Session** (5 timmar) och **Vecka**: hur mycket av abonnemanget som är använt och när det fylls på. `prognos` är var veckan landar i nuvarande takt. |
 | 4 | **Totalt**: alla tokens sedan installationen, i dollar och i kylvatten för datahallen. **Chatt**: bara den här chatten. |
 
+Staplarna byter färg gradvis från grönt via gult till rött. Session och Vecka är gröna upp till 50 % och nästan helt röda
+vid 80 %. Kontext är grön upp till 250k tokens och helt röd från 400k: då är det dags för `/compact`.
+
 **Dollarn är en uppskattning till API-listpris.** Den visar vad samma användning skulle kosta med en API-nyckel, inte
 vad ditt abonnemang kostar. Räknaren läser chattarnas egna loggar på den här datorn; den skickar inget någonstans.
 

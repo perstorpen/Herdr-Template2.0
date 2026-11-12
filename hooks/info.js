@@ -61,6 +61,7 @@ STATUSRADEN
   Rad 1   Modellen, mappen, git-grenen, tiden och raderna som ändrats.
   Rad 2   Kontext: hur full chatten är.  Månad: tokens och dollar den här månaden.
   Rad 3   Session (5 timmar) och Vecka: hur mycket av ditt Claude-abonnemang som är använt, och när det fylls på.
+  Färgen går från grönt via gult till rött: Session och Vecka från 50 %, Kontext från 250k tokens (helt röd från 400k).
   Rad 4   Totalt: alla tokens sedan mallen installerades, i dollar och kylvatten.  Chatt: bara den här chatten.
           Dollarn är ett värde till API-listpris, inte vad abonnemanget kostar.
 
