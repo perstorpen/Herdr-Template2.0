@@ -47,7 +47,7 @@ test('every answer is kept in the log, and the count follows the latest', () => 
   item = withStatus(item, 'bad', 'user', 'Knappen syns inte');
   item = withStatus(item, 'fixed', 'agent', 'Knappen flyttad upp');
   assert.deepEqual(item.log.map(one => one.status), ['bad', 'fixed']);
-  assert.deepEqual(countOf([item]), { open: 0, ok: 0, bad: 0, fixed: 1 });
+  assert.deepEqual(countOf([item]), { open: 0, ok: 0, bad: 0, working: 0, fixed: 1 });
   assert.match(describeItem(item), /The user said: Knappen syns inte\n\s+Fixed: Knappen flyttad upp/);
 });
 
@@ -133,6 +133,24 @@ test('an agent can only say fixed about a point the user marked wrong', () => {
   assert.deepEqual(read()[0].log.map(one => [one.who, one.status]), [['user', 'bad'], ['agent', 'fixed'], ['user', 'ok']]);
   assert.match(run(['show', 'K1']).stdout, /user: WRONG – Syns inte/);
   assert.match(run(['list', 'start']).stdout, /^## Start\nK1 \[good\]/);
+});
+
+test('an agent turns a red point yellow while it fixes it, and red again if it stops', () => {
+  const { run, add, read } = tempList();
+  add([point('Robots', 'The list'), point('Robots', 'The card')]);
+  assert.equal(run(['start', 'K1']).status, 1, 'only a red point turns yellow');
+  run(['bad', 'K1', 'Syns', 'inte']);
+  assert.equal(run(['start', 'K1']).status, 0);
+  assert.equal(read()[0].status, 'working');
+  assert.match(run(['show', 'K1']).stdout, /WRONG, an agent is fixing it[\s\S]*The user: Syns inte/);
+  assert.equal(run(['stop', 'K1']).status, 1, 'stop needs the reason');
+  assert.equal(run(['stop', 'K1', 'Needs', 'an', 'answer']).status, 0);
+  assert.equal(read()[0].status, 'bad');
+  assert.match(run(['show', 'K1']).stdout, /The user: Syns inte/);
+  run(['start', 'K1']);
+  assert.equal(run(['fixed', 'K1', 'Moved up']).status, 0);
+  assert.deepEqual(read()[0].log.map(one => one.status), ['bad', 'working', 'stopped', 'working', 'fixed']);
+  assert.equal(run(['stop', 'K2', 'x']).status, 1);
 });
 
 test('retext gives a point new words and keeps its answer', () => {

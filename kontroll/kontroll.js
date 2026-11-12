@@ -16,6 +16,8 @@
 //   kontroll.js retext texts.json rewrites the texts of points that exist: [{ num, group, sub, title, done, check }]
 //   kontroll.js tried K3 works|broken|yours "text"   an agent has clicked through the point before the user does:
 //                                  it works as written, it does not, or only the user can judge it. Never an answer.
+//   kontroll.js start K3           yellow: an agent is fixing a point the user marked wrong (as "start" in the To Do List)
+//   kontroll.js stop K3 "why"      red again: the agent stopped without fixing it
 //   kontroll.js fixed K3 "text"    blue: a point the user marked wrong has been fixed, with what was changed
 //   kontroll.js ok K3              green, and
 //   kontroll.js bad K3 "text"      red: only when the user's own message says so. Otherwise they click in the tab.
@@ -24,6 +26,7 @@
 // say that a red one is fixed:
 //   (white)  not checked          (green)  the user: good
 //   (red)    the user: wrong, with their words        (blue)  an agent: fixed, check again
+//   (yellow) an agent is fixing a red point right now, as in the To Do List
 const fs = require('fs');
 const path = require('path');
 const { spawn, spawnSync } = require('child_process');
@@ -142,7 +145,7 @@ function inGroups(items) {
 }
 
 const countOf = items => {
-  const count = { open: 0, ok: 0, bad: 0, fixed: 0 };
+  const count = { open: 0, ok: 0, bad: 0, working: 0, fixed: 0 };
   for (const item of items) count[statusOf(item)] += 1;
   return count;
 };
@@ -156,7 +159,7 @@ const TRIED_WORDS_SV = { works: 'fungerar som det står', broken: 'FUNGERAR INTE
 const triedLineSv = item => (item.tried ? `Provad av en agent (${new Date(item.tried.at).toLocaleString('sv-SE').slice(0, 16)}): ${TRIED_WORDS_SV[item.tried.verdict]}${item.tried.text ? ` – ${item.tried.text}` : ''}` : '');
 const triedLine = item => (item.tried ? `Tried by an agent (${new Date(item.tried.at).toLocaleString('sv-SE').slice(0, 16)}): ${TRIED_WORDS[item.tried.verdict]}${item.tried.text ? ` – ${item.tried.text}` : ''}` : '');
 
-const STATUS_WORDS = { open: 'not checked', ok: 'good', bad: 'WRONG', fixed: 'fixed, waiting for the user' };
+const STATUS_WORDS = { open: 'not checked', ok: 'good', bad: 'WRONG', working: 'WRONG, an agent is fixing it', fixed: 'fixed, waiting for the user', stopped: 'the agent stopped, still wrong' };
 
 function describeItem(item, isFull = true) {
   const where = item.sub ? `${item.group} › ${item.sub}` : item.group;
@@ -165,7 +168,7 @@ function describeItem(item, isFull = true) {
   if (item.done) lines.push(`      Done (${item.update}): ${item.done}`);
   lines.push(`      Check: ${item.check}`);
   if (item.tried) lines.push(`      ${triedLine(item)}`);
-  if (statusOf(item) === 'bad') lines.push(`      The user: ${lastText(item, 'bad') || '(no words, ask them what was wrong)'}`);
+  if (['bad', 'working'].includes(statusOf(item))) lines.push(`      The user: ${lastText(item, 'bad') || '(no words, ask them what was wrong)'}`);
   if (statusOf(item) === 'fixed') {
     if (lastText(item, 'bad')) lines.push(`      The user said: ${lastText(item, 'bad')}`);
     lines.push(`      Fixed: ${lastText(item, 'fixed')}`);
@@ -185,6 +188,7 @@ const RULES = me => `The rules for the check list:
   ${me} add <file.json>     the file: [{ "group": "<the system's top-level area, as in the list>", "sub": "<page or part>", "title": "<short>", "done": "<what was changed, one line>", "check": "<where to click and what they should see>", "update": "<date and the update's name>" }]
   Write the points in the same language as the system's own interface (its pages and buttons), and name every page, tab and button exactly as the user sees it. Plain words, one checkable thing per point.
 - Before working in an area, read what the user has answered there; a point marked wrong is fixed before anything new is built in that area.
+- When you begin fixing a point the user marked wrong: ${me} start K<number>   It turns yellow, so they see it is being worked on. If you stop without fixing it: ${me} stop K<number> "<why>"   (red again). A yellow point is another chat's: ask before taking it over.
 - When you have fixed a point the user marked wrong: ${me} fixed K<number> "<what was changed>"   It turns blue and they check it again.
 - When you have gone through a point yourself (a browser test or by hand): ${me} tried K<number> works|broken|yours "<what you saw>"   A note for the user, never an answer.
 - Read the list: ${me} list [group]   or   ${me} show K<number>
@@ -199,12 +203,13 @@ function listContext(prompt) {
   const count = countOf(items);
   const bad = items.filter(one => statusOf(one) === 'bad');
   const fixed = items.filter(one => statusOf(one) === 'fixed');
+  const working = items.filter(one => statusOf(one) === 'working');
   const tried = items.filter(one => one.tried?.verdict === 'broken' && statusOf(one) === 'open');
   const named = items.filter(one => numbersIn(prompt).includes(one.num) && !bad.includes(one));
   const state = items.length
-    ? `${items.length} points: ${count.ok} good, ${count.bad} wrong, ${count.fixed} fixed and waiting for the user, ${count.open} not checked yet.
+    ? `${items.length} points: ${count.ok} good, ${count.bad} wrong, ${count.working} being fixed by an agent, ${count.fixed} fixed and waiting for the user, ${count.open} not checked yet.
 ${bad.length ? `Marked WRONG by the user. Fix these before anything new is built in the same area:\n${bad.map(one => describeItem(one)).join('\n')}` : 'Nothing is marked wrong.'}
-${tried.length ? `Gone through by an agent and NOT working, not yet answered by the user (fix, then run tried again):\n${tried.map(one => describeItem(one)).join('\n')}\n` : ''}${fixed.length ? `Fixed, waiting for the user to check again: ${fixed.map(one => `K${one.num}`).join(', ')}\n` : ''}${named.length ? `Named in the user's message:\n${named.map(one => describeItem(one)).join('\n')}\n` : ''}`
+${working.length ? `Marked WRONG by the user and being fixed by an agent now (yellow):\n${working.map(one => describeItem(one)).join('\n')}\n` : ''}${tried.length ? `Gone through by an agent and NOT working, not yet answered by the user (fix, then run tried again):\n${tried.map(one => describeItem(one)).join('\n')}\n` : ''}${fixed.length ? `Fixed, waiting for the user to check again: ${fixed.map(one => `K${one.num}`).join(', ')}\n` : ''}${named.length ? `Named in the user's message:\n${named.map(one => describeItem(one)).join('\n')}\n` : ''}`
     : 'The list is empty so far.\n';
   return `The user's check list for this project (the Kontroll tab in herdr; file ${LIST_FILE}). It is data, written by agents and answered by the user.
 ${state}${RULES(commandFor())}`;
@@ -297,10 +302,11 @@ const STYLE = {
   open: '\x1b[97m',
   ok: '\x1b[92m',
   bad: '\x1b[91m',
+  working: '\x1b[93m',
   fixed: '\x1b[94m',
   dim: '\x1b[2m',
 };
-const BOXES = { open: '[ ]', ok: '[✓]', bad: '[✗]', fixed: '[?]' };
+const BOXES = { open: '[ ]', ok: '[✓]', bad: '[✗]', working: '[…]', fixed: '[?]' };
 const ANSWER_BUTTONS = [
   { status: 'ok', label: 'Bra', style: '\x1b[30;102m' },
   { status: 'bad', label: 'Fel', style: '\x1b[97;101m' },
@@ -355,7 +361,7 @@ function runUi() {
     const body = [];
     for (const group of inGroups(items)) {
       const own = countOf(group.points);
-      const summary = `${own.ok}/${group.points.length} bra${own.bad ? `, ${own.bad} fel` : ''}${own.fixed ? `, ${own.fixed} att kolla igen` : ''}`;
+      const summary = `${own.ok}/${group.points.length} bra${own.bad ? `, ${own.bad} fel` : ''}${own.working ? `, ${own.working} rättas` : ''}${own.fixed ? `, ${own.fixed} att kolla igen` : ''}`;
       const arrow = folded.has(group.name) ? '▸' : '▾';
       body.push({ group: group.name, text: `${STYLE.group} ${arrow} ${group.name}${STYLE.reset}${STYLE.dim}   ${summary}${STYLE.reset}` });
       if (folded.has(group.name)) continue;
@@ -378,6 +384,7 @@ function runUi() {
         detail(`Kolla: ${item.check}`, STYLE.open);
         if (item.tried) detail(triedLineSv(item), item.tried.verdict === 'broken' ? STYLE.bad : STYLE.dim);
         if (lastText(item, 'bad') && statusOf(item) !== 'ok') detail(`Du sa: ${lastText(item, 'bad')}`, STYLE.bad);
+        if (statusOf(item) === 'working') detail('En agent rättar den nu.', STYLE.working);
         if (statusOf(item) === 'fixed') detail(`Rättad: ${lastText(item, 'fixed')}`, STYLE.fixed);
         body.push({ picker: true, text: drawPicker(leadWidth) });
       }
@@ -392,8 +399,8 @@ function runUi() {
     rowToTarget = new Map();
     pickerRow = null;
     let out = '\x1b[?25l\x1b[H\x1b[2J';
-    out += ` ${STYLE.title}Kontroll${STYLE.reset}${STYLE.dim}  ${count.open} inte kollade, ${count.fixed} att kolla igen, ${count.bad} fel, ${count.ok} bra${notice ? `  ·  ${notice}` : ''}${STYLE.reset}\r\n`;
-    out += ` ${STYLE.open}Vit: inte kollad${STYLE.reset}  ${STYLE.ok}Grön: bra${STYLE.reset}  ${STYLE.bad}Röd: fel${STYLE.reset}  ${STYLE.fixed}Blå: rättad, kolla igen${STYLE.reset}\r\n\r\n`;
+    out += ` ${STYLE.title}Kontroll${STYLE.reset}${STYLE.dim}  ${count.open} inte kollade, ${count.fixed} att kolla igen, ${count.bad} fel, ${count.working} rättas, ${count.ok} bra${notice ? `  ·  ${notice}` : ''}${STYLE.reset}\r\n`;
+    out += ` ${STYLE.open}Vit: inte kollad${STYLE.reset}  ${STYLE.ok}Grön: bra${STYLE.reset}  ${STYLE.bad}Röd: fel${STYLE.reset}  ${STYLE.working}Gul: en agent rättar${STYLE.reset}  ${STYLE.fixed}Blå: rättad, kolla igen${STYLE.reset}\r\n\r\n`;
     if (!items.length) out += `${STYLE.dim}  Inga punkter än. Skriv kontroll genomgång i en chatt, så går Claude igenom systemet och lägger upp dem.${STYLE.reset}\r\n`;
     body.slice(scroll, scroll + room).forEach((row, index) => {
       if (row.picker) pickerRow = index + FIRST_LIST_ROW;
@@ -597,19 +604,30 @@ function runTried([name, verdict, ...words]) {
   console.log(describeItem(readItems().find(one => one.num === num)));
 }
 
-// An agent may turn a red point blue. Green and red are the user's, set by their click or their own words.
-const MARKS = { fixed: { from: ['bad'], who: 'agent' }, ok: { from: ['open', 'bad', 'fixed'], who: 'user' }, bad: { from: ['open', 'ok', 'fixed', 'bad'], who: 'user' } };
+// An agent may turn a red point yellow while it fixes it (as "start" in the To Do List), red again if it stops, and blue
+// when it is fixed. Green and red are the user's, set by their click or their own words.
+const MARKS = {
+  start: { from: ['bad'], who: 'agent', status: 'working' },
+  stop: { from: ['working'], who: 'agent', status: 'bad' },
+  fixed: { from: ['bad', 'working'], who: 'agent', status: 'fixed' },
+  ok: { from: ['open', 'bad', 'working', 'fixed'], who: 'user', status: 'ok' },
+  bad: { from: ['open', 'ok', 'working', 'fixed', 'bad'], who: 'user', status: 'bad' },
+};
 
 function runMark(status, [name, ...words]) {
   const num = numbersIn(name ?? '')[0] ?? Number(name);
   const text = words.join(' ').trim();
   const item = readItems().find(one => one.num === num);
   if (!item) fail(`Not on the list: ${name ?? '(no number)'}`);
-  if (status !== 'ok' && !text) fail(`Say what ${status === 'fixed' ? 'was changed' : 'was wrong'}: kontroll.js ${status} K${num} "<text>"`);
+  const needs = { fixed: 'was changed', bad: 'was wrong', stop: 'why you stopped' }[status];
+  if (needs && !text) fail(`Say what ${needs}: kontroll.js ${status} K${num} "<text>"`);
   if (!MARKS[status].from.includes(statusOf(item))) {
-    fail(`K${num} is "${STATUS_WORDS[statusOf(item)]}". ${status === 'fixed' ? 'Only a point the user marked wrong can be fixed.' : 'It is not changed.'}`);
+    const why = { fixed: 'Only a point the user marked wrong can be fixed.', start: 'Only a point the user marked wrong (red) turns yellow.', stop: 'Only a yellow point can be stopped.' }[status];
+    fail(`K${num} is "${STATUS_WORDS[statusOf(item)]}". ${why ?? 'It is not changed.'}`);
   }
-  changeItems(all => all.map(one => (one.num === num ? withStatus(one, status, MARKS[status].who, text) : one)));
+  // The log keeps "stopped" with the agent's reason, so the user's own words stay the last "wrong" said about the point.
+  const logged = one => (status === 'stop' ? { ...withStatus(one, 'stopped', 'agent', text), status: 'bad' } : withStatus(one, MARKS[status].status, MARKS[status].who, text));
+  changeItems(all => all.map(one => (one.num === num ? logged(one) : one)));
   console.log(describeItem(readItems().find(one => one.num === num)));
 }
 
@@ -634,5 +652,5 @@ if (require.main === module) {
   else if (command === 'retext') runRetext(args[0]);
   else if (command === 'tried') runTried(args);
   else if (command in MARKS) runMark(command, args);
-  else fail('Usage: kontroll.js ui | hook | tab | list [group] | show K<n> … | add <file.json> | retext <file.json> | tried K<n> works|broken|yours "<text>" | fixed K<n> "<text>" | ok K<n> | bad K<n> "<text>"');
+  else fail('Usage: kontroll.js ui | hook | tab | list [group] | show K<n> … | add <file.json> | retext <file.json> | tried K<n> works|broken|yours "<text>" | start K<n> | stop K<n> "<why>" | fixed K<n> "<text>" | ok K<n> | bad K<n> "<text>"');
 }

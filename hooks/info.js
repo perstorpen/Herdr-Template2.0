@@ -43,7 +43,7 @@ KONTROLL
   Varje gång en chatt ändrar något du kan se eller göra i det du bygger, lägger den upp en punkt per sak att kolla:
   var du klickar och vad du ska se. Du går igenom dem i fliken Kontroll.
   Färgerna   Vit: inte kollad.  Grön: du har sagt Bra.  Röd: du har sagt Fel, med vad som var fel.
-             Blå: en chatt har rättat det du sa var fel, kolla igen.
+             Gul: en chatt håller på att rätta det.  Blå: en chatt har rättat det du sa var fel, kolla igen.
   I fliken   Klicka på en grupp för att öppna den och på en punkt för att svara Bra, Fel eller Inte kollad. Fel ber dig
              skriva vad som var fel. Pilar och Enter fungerar också, Esc stänger, Ctrl+Z ångrar.
   Chattarna rättar de röda punkterna först, innan de bygger något nytt i samma del.

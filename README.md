@@ -178,6 +178,7 @@ Kontroll är till för att du ska veta att det chattarna bygger faktiskt fungera
 | Vit | Inte kollad än. |
 | Grön | Du har sagt **Bra**. |
 | Röd | Du har sagt **Fel** och skrivit vad som var fel. Chattarna rättar röda punkter innan de bygger något nytt i samma del. |
+| Gul | En chatt håller på att rätta det du sa var fel. |
 | Blå | En chatt har rättat det du sa var fel. Kolla igen. |
 
 Bara du sätter grönt och rött. En chatt kan också prova en punkt själv och skriva vad den såg, som en anteckning bredvid

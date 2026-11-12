@@ -2,6 +2,11 @@
 
 Den nyaste versionen står först. Skriv `uppdatera` i en chatt för att hämta den.
 
+## 2.3.0 – 2026-11-12
+
+- En röd punkt i Kontroll blir gul när en chatt börjar rätta den, som i To Do List. Då ser du vad som håller på att rättas.
+- Slutar chatten utan att ha rättat den blir punkten röd igen. När den är rättad blir den blå, som förut.
+
 ## 2.2.0 – 2026-11-12
 
 - Staplarna i statusraden byter färg gradvis från grönt via gult till rött i stället för i tre hopp.
