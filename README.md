@@ -22,115 +22,84 @@ Allt börjar tomt: listan, räknaren och månaderna fylls när du använder mall
 
 ## Det här behöver du
 
-- **Ett Claude-konto med Claude Code**: Pro, Max, Team eller Enterprise, eller en API-nyckel. Raderna `Session` och
-  `Vecka` i statusraden syns bara med ett abonnemang (Pro, Max och liknande).
-- **En dator med Windows 10/11 eller Linux.** På Mac fungerar det mesta, men installationsskriptet är gjort för Ubuntu.
-- **Ungefär 15 minuter** första gången.
+- En dator med **Windows 10 eller 11** (eller Linux).
+- Ett **Claude-konto** med Claude Code: Pro, Max, Team eller Enterprise.
+- Ungefär **15 minuter**.
 
 ---
 
 ## Installera
 
-Det enklaste är att du gör tre saker själv och låter Claude göra resten. Varje rad nedan kopierar du och klistrar in. I
-Ubuntu klistrar du in med **högerklick** eller **Ctrl+Shift+V**, och kör raden med **Enter**.
+Du gör tre korta steg själv och klistrar sedan in en mening till Claude, som installerar resten åt dig.
 
-### Steg 1: skaffa Ubuntu (bara Windows)
+Allt i rutorna nedan kopierar du och klistrar in. I Ubuntu klistrar du in med **högerklick**, och kör med **Enter**.
 
-Mallen körs i Ubuntu, som körs inuti Windows. Du behöver ingen ny dator.
+### 1. Skaffa Ubuntu
 
-1. Tryck på **Start**, skriv `PowerShell`, högerklicka på det och välj **Kör som administratör**.
-2. Klistra in och tryck Enter:
+Mallen körs i Ubuntu, som körs inuti Windows.
+
+1. Tryck på **Start**, skriv `PowerShell`, högerklicka och välj **Kör som administratör**.
+2. Klistra in:
    ```powershell
    wsl --install -d Ubuntu
    ```
 3. **Starta om datorn** när den ber om det.
-4. Ubuntu öppnas av sig själv efter omstarten (gör den inte det: Start → skriv `Ubuntu` → öppna). Den ber dig välja ett
-   **användarnamn** (små bokstäver, inga mellanslag) och ett **lösenord**. Lösenordet syns inte medan du skriver, det
-   är normalt. Skriv upp det, du behöver det i nästa steg.
-5. Har du inte **Windows Terminal**: hämta den gratis från Microsoft Store. Ubuntu finns sedan som en flik där (pilen
-   **˅** bredvid flikarna), och mallen ser bäst ut där.
+4. Ubuntu öppnas efter omstarten (annars: Start → `Ubuntu`). Välj ett **användarnamn** (små bokstäver) och ett
+   **lösenord**. Lösenordet syns inte när du skriver, det är normalt. Skriv upp det.
 
-På Linux hoppar du över det här steget och öppnar en terminal.
+Har du inte **Windows Terminal**, hämta den gratis i Microsoft Store. Där öppnar du Ubuntu med pilen **˅** bredvid
+flikarna. På Linux hoppar du över hela steg 1.
 
-### Steg 2: förbered Ubuntu
+### 2. Lägg in Claude
 
-Klistra in i Ubuntu och tryck Enter. Den frågar efter lösenordet från steg 1:
+Klistra in i Ubuntu. Den frågar efter lösenordet från steg 1:
 
 ```bash
 sudo apt update && sudo apt install -y git curl xz-utils python3 libatomic1
 ```
 
-Det tar en eller ett par minuter. Den är klar när du kan skriva igen.
-
-### Steg 3: installera Claude Code
+När du kan skriva igen, klistra in:
 
 ```bash
 curl -fsSL https://claude.ai/install.sh | bash
 ```
 
-**Stäng sedan Ubuntu och öppna den igen**, så att kommandot `claude` hittas.
+**Stäng Ubuntu och öppna den igen.**
 
-### Steg 4: starta Claude och logga in
+### 3. Logga in på Claude
 
 ```bash
 claude
 ```
 
-Första gången väljer du utseende och loggar in: Claude visar en länk, du öppnar den i webbläsaren, loggar in med ditt
-Claude-konto och klistrar in koden du får tillbaka. Svara **ja** när den frågar om du litar på mappen.
+Claude visar en länk. Öppna den, logga in med ditt Claude-konto och klistra in koden du får tillbaka. Svara **ja** när
+den frågar om du litar på mappen.
 
-### Steg 5: be Claude installera mallen
+### 4. Be Claude installera mallen
 
-Klistra in den här meningen i Claude och tryck Enter:
+Klistra in den här meningen i Claude:
 
 ```
-Installera Herdr-Template2.0 åt mig. Följ instruktionerna i https://raw.githubusercontent.com/perstorpen/Herdr-Template2.0/main/CLAUDE-INSTALL.md
+Installera Herdr-Template2.0 åt mig. Följ instruktionerna i https://raw.githubusercontent.com/perstorpen/Herdr-Template2.0/main/lib/claude-install.md
 ```
 
-Claude hämtar mallen, installerar resten (Node, herdr, inställningarna och teckensnittet för ikonerna) och berättar vad
-den gör. Ibland frågar den om den får köra ett kommando: svara **ja**. Till sist säger den vad du ska göra, och det är
-steg 6.
+Claude installerar allt och berättar vad den gör. Svara **ja** när den frågar om den får köra något. När den är klar
+säger den åt dig att gå vidare till steg 5.
 
-### Steg 6: starta mallen
+### 5. Starta mallen
 
-1. Stäng Windows Terminal **helt** (alla fönster) och öppna Ubuntu igen.
-2. Skriv, med valfritt namn på mappen:
-   ```bash
-   herdr-template ~/mitt-projekt
-   ```
-
-Mappen skapas om den inte finns. herdr öppnas med flikarna:
-
-**Main Building · Interface · Questions · Side Quests · To Do List**
-
-- **Svara ja** när en chatt frågar om du litar på mappen. Det gör varje chatt en gång per mapp.
-- Skriv **`info`** i en chatt för att se alla kommandon.
-
-Nästa gång skriver du samma rad igen. Sessionen öppnas som du lämnade den, och det som har stängts startas igen. Utan
-mapp (`herdr-template`) används mappen du står i. Ett eget namn på sessionen: `herdr-template ~/mitt-projekt projektet`.
-
-### Installera utan Claude
-
-Vill du hellre köra installationen själv, efter steg 2:
+Stäng Windows Terminal **helt**, öppna Ubuntu igen och skriv:
 
 ```bash
-git clone https://github.com/perstorpen/Herdr-Template2.0.git ~/Herdr-Template2.0
-~/Herdr-Template2.0/install.sh
+herdr-template ~/mitt-projekt
 ```
 
-Skriptet hoppar över det som redan finns och kan köras igen när som helst. Det gör det här:
+`mitt-projekt` är mappen chattarna jobbar i. Välj vilket namn du vill; den skapas om den inte finns.
 
-1. Installerar `curl`, `git`, `python3`, `xz-utils` och `libatomic1` om de saknas (frågar efter lösenordet).
-2. Installerar **Node** (i `~/.local`, inget i systemet), **Claude Code** och **herdr**.
-3. Lägger in mallens inställningar i Claude Code (`~/.claude/settings.json`): statusraden, kommandona och knapparna.
-   Har du egna inställningar finns de kvar, och mallen läggs till.
-4. Ger herdr mallens utseende (`~/.config/herdr/config.toml`).
-5. Skapar kommandot `herdr-template`.
-6. På Windows: installerar teckensnittet **CaskaydiaMono Nerd Font** och väljer det i Windows Terminal, så att ikonerna i
-   statusraden syns.
+herdr öppnas med flikarna **Main Building · Interface · Questions · Side Quests · To Do List**. Svara **ja** när en
+chatt frågar om du litar på mappen, och skriv **`info`** för att se alla kommandon.
 
-En fil som skriptet ersätter sparas först i `~/.herdr-template-backups/<tid>/`. Vill du hoppa över teckensnittet:
-`install.sh --no-windows`. Fortsätt sedan med steg 6.
+Nästa gång skriver du samma rad igen, och allt öppnas som du lämnade det.
 
 ---
 
@@ -214,23 +183,19 @@ vad ditt abonnemang kostar. Räknaren läser chattarnas egna loggar på den här
 
 ---
 
-## Uppdatera
+## Uppdatera eller ta bort
 
-```bash
-cd ~/Herdr-Template2.0 && git pull && ./install.sh
+Starta `claude` i Ubuntu och klistra in en av meningarna:
+
+```
+Uppdatera Herdr-Template2.0 åt mig. Följ instruktionerna i https://raw.githubusercontent.com/perstorpen/Herdr-Template2.0/main/lib/claude-install.md
 ```
 
-Stäng sedan herdr (eller starta om terminalen) och starta mallen igen. Din lista och räknaren påverkas inte.
+```
+Ta bort Herdr-Template2.0 åt mig. Följ instruktionerna i https://raw.githubusercontent.com/perstorpen/Herdr-Template2.0/main/lib/claude-install.md
+```
 
-## Ta bort
-
-1. Ta bort raderna med `Herdr-Template2.0` i `~/.claude/settings.json`, eller lägg tillbaka säkerhetskopian från
-   `~/.herdr-template-backups/`.
-2. `rm ~/.local/bin/herdr-template`
-3. `rm -rf ~/Herdr-Template2.0`
-4. Vill du också ta bort listan, räknaren och pausens inställning: `rm -rf ~/.claude/herdr-template`
-
-Claude Code, herdr och Node finns kvar. De tas bort på sina egna sätt.
+Efter en uppdatering: stäng Windows Terminal och starta mallen igen. Din lista och räknaren påverkas inte.
 
 ---
 
@@ -238,15 +203,15 @@ Claude Code, herdr och Node finns kvar. De tas bort på sina egna sätt.
 
 | Problem | Gör så här |
 |---|---|
-| Ikonerna i statusraden är rutor eller frågetecken | Teckensnittet saknas. Kör `install.sh` igen, starta om Windows Terminal, och kontrollera under Inställningar → Ubuntu → Utseende att teckensnittet är *CaskaydiaMono NF*. På Linux: installera en [Nerd Font](https://www.nerdfonts.com) och välj den i terminalen. |
+| Ikonerna i statusraden är rutor eller frågetecken | Teckensnittet saknas. Be Claude uppdatera mallen (meningen ovan), starta om Windows Terminal, och kontrollera under Inställningar → Ubuntu → Utseende att teckensnittet är *CaskaydiaMono NF*. På Linux: installera en [Nerd Font](https://www.nerdfonts.com) och välj den i terminalen. |
 | `herdr-template: command not found` | Starta om terminalen. Hjälper det inte: `source ~/.bashrc`. |
 | Statusraden visar `väntar på data` vid Session och Vecka | Det visas tills chatten har fått sitt första svar. Med en API-nyckel i stället för ett abonnemang kommer de raderna aldrig. |
 | Knapparna under skrivrutan syns inte | Starta en ny chatt (`/exit` och sedan `claude`, eller starta om mallen). Kontrollera att `CLAUDE_CODE_PLUGIN_DIRS` i `~/.claude/settings.json` pekar på `~/Herdr-Template2.0/mod`. |
 | `to do` lägger inget på listan | Det tar några sekunder, eftersom Claude Haiku skriver punkterna. Fliken To Do List öppnas av sig själv om den saknas. |
 | En chatt säger att den är pausad | Över 95 % av sessionen är använd. Skriv `fortsätt` för att låta den jobba ändå, eller `pause off` för att stänga av pausen. |
 | `Could not resolve host: github.com` | Ubuntu har tappat nätverket, vanligt i en nyinstallerad WSL. Skriv `wsl --shutdown` i PowerShell, öppna Ubuntu igen och prova på nytt. |
-| `claude: command not found` efter steg 3 | Stäng Ubuntu och öppna den igen. |
-| Något annat | Kör `install.sh` igen. Det rättar det som saknas och skriver inte över dina data. |
+| `claude: command not found` | Stäng Ubuntu och öppna den igen. |
+| Något annat | Be Claude uppdatera mallen (meningen ovan). Det rättar det som saknas och rör inte din lista eller räknaren. |
 
 ## Var allt ligger
 
@@ -265,7 +230,7 @@ Mallen kan hämtas och användas av vem som helst. Ändringar i själva repot p�
 
 | Del | Fil |
 |---|---|
-| Installationen | `install.sh`, `CLAUDE-INSTALL.md` (instruktionerna Claude följer i steg 5), `lib/merge-settings.js`, `config/settings.template.json` |
+| Installationen | `install.sh` (kan också köras för hand), `lib/claude-install.md` (det Claude följer i steg 4), `lib/merge-settings.js`, `config/settings.template.json` |
 | Flikarna | `start.sh` |
 | To Do List och kommandot `to do` | `todo/todo.js` |
 | Statusraden och räknaren | `statusline/statusline.js` |
