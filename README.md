@@ -144,6 +144,10 @@ Utan `agent`-kommandot väljer chatten själv om ett uppdrag ska få extra agent
 valet, till exempel `Agenter: +1 – två delar som inte rör samma filer`. Frågor och korta svar får inga extra agenter.
 Varje agent drar av din användning.
 
+En chatt säger alltid tydligt hur långt den har kommit. Så länge agenter eller tester arbetar börjar dess meddelande med
+en röd rad `PÅGÅENDE` och vad som fortfarande körs. Först när allt är färdigt och inget arbete pågår börjar rapporten med
+en grön rad `100 % KLART`. Chatten avslutar inte sitt svar medan dess agenter arbetar.
+
 ### To Do List
 
 | Färg | Betyder |

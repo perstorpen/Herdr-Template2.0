@@ -31,6 +31,8 @@ SKRIV I EN CHATT
   gör punkt 3              Chatten gör punkt 3 på listan (vilket nummer som helst).
   agent 2 <uppgift>        Uppgiften körs med 2 extra agenter. agent 0 betyder inga, agent rec låter chatten välja.
                            Utan kommandot väljer chatten själv och skriver först en rad som "Agenter: +1 – ...".
+                           Medan agenter eller tester arbetar börjar chattens meddelande med en röd rad PÅGÅENDE.
+                           När allt är färdigt och inget pågår börjar rapporten med en grön rad 100 % KLART.
   time                     Chatten uppskattar hur länge de andra chattarna som jobbar har kvar.
   pause                    Visar pausen: chattarna stannar när 95 % av sessionens tokens är använda.
   pause 90                 Flyttar gränsen till 90 % (vilket tal som helst). pause off stänger av, pause on sätter 95 igen.

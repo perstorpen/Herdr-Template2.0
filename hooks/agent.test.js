@@ -61,6 +61,10 @@ test('every way of starting agents asks for the visible first line and the same 
     assert.match(context, /subagent_type "fork"/);
     assert.match(context, /isolation "worktree"/);
     assert.match(context, /git -C <this chat's folder> diff HEAD \| git apply/);
+    // the chat waits for its own work and says in one line whether work is going or all of it is done
+    assert.match(context, /Do not end your reply while agents, test runs or other background work/);
+    assert.match(context, /`- PÅGÅENDE: <what is still running>`/);
+    assert.match(context, /`\+ 100 % KLART: inget arbete pågår`/);
   }
 });
 

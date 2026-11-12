@@ -13,6 +13,13 @@ const RUNNING = `How to run extra agents:
 - One that changes files gets isolation "worktree". A worktree starts from origin's main branch, so if the task builds on this chat's unsaved or unpushed work, tell it to first run \`git reset --hard <this chat's HEAD commit>\` there, then \`git -C <this chat's folder> diff HEAD | git apply\`, and copy new untracked files it needs.
 - This chat leads: wait for every agent, bring the changes into its own working tree, check the combined result itself, and report in Swedish what each did. The user's other rules apply to every agent.`;
 
+// A chat that stops while its agents still work shows as done in herdr, and the user then looks for something that is not there.
+// So the chat waits for its own work, and every report says in one unmistakable line whether work is still going or all of it is done.
+const STATUS = `Say unmistakably whether work is still going or everything is done:
+- Do not end your reply while agents, test runs or other background work you started for the task are still going. Wait for them in the same turn, then report.
+- If you write to the user while something is still going, the message begins with a \`diff\` code block holding one line: \`- PÅGÅENDE: <what is still running>\`. Such a message never says or suggests that the work is done.
+- Only when everything is finished and checked, and nothing you started is still running, the final report begins with a \`diff\` code block holding one line: \`+ 100 % KLART: inget arbete pågår\`. Never write that line, or the word "klart", before that.`;
+
 const FIRST_LINE = `Your very first output, before any tool call, is one line in Swedish: \`Agenter: +N – short reason\`, where N is the number of extra agents.`;
 
 const CHOOSING = `Choose how many extra agents suit the task, counting what really runs in parallel and what the extra cost buys. Often that is 0: a small fix, one connected change, or changes to the same files. If you must ask the user something first, write \`Agenter: väljs efter dina svar\` instead, and choose after the answer.`;
@@ -50,13 +57,15 @@ function commandContext({ count, mission }) {
 ${missionRule}
 ${amountRule(count)}
 ${FIRST_LINE}
-${RUNNING}`;
+${RUNNING}
+${STATUS}`;
 }
 
 const DEFAULT_CONTEXT = `The user's standing rule, which is an explicit request for parallel agents when they help. If this message is only a question, an answer to your question, or a comment, reply as usual, with no extra agents and without the line below. If it asks for work, it is a task:
 ${CHOOSING}
 ${FIRST_LINE}
-${RUNNING}`;
+${RUNNING}
+${STATUS}`;
 
 function contextFor(prompt) {
   if (process.env.TODO_WORKER || !prompt.trim() || isHandledElsewhere(prompt)) return null;
