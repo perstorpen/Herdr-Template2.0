@@ -1,0 +1,1 @@
+{ "name": "herdr-template-buttons", "version": "1.0.0", "description": "Herdr-Template2.0's buttons under the prompt: /compact, månad (tokens and dollars per month), and effort for this chat on Opus; a green KLAR under a finished turn, and the user's own messages on a green background.", "types": "./types/index.d.ts" }

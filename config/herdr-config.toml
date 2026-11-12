@@ -1,0 +1,13 @@
+# herdr's look in the template: a black background, the gruvbox colours, and Tab to go to the next tab.
+onboarding = false
+
+[theme]
+name = "gruvbox"
+auto_switch = false
+
+[theme.custom]
+panel_bg = "#000000"
+sidebar_bg = "#000000"
+
+[keys]
+next_tab = ["prefix+n", "tab"]

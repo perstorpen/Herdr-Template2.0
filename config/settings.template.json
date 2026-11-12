@@ -1,0 +1,23 @@
+{
+  "env": {
+    "CLAUDE_CODE_PLUGIN_DIRS": "__REPO__/mod",
+    "CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT": "1"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "__NODE__ __REPO__/statusline/statusline.js",
+    "refreshInterval": 10
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/info.js", "timeout": 10 }] },
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/todo/todo.js hook", "timeout": 30 }] },
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/pause.js prompt", "timeout": 10 }] },
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/time.js", "timeout": 20 }] },
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/agent.js", "timeout": 10 }] }
+    ],
+    "PreToolUse": [
+      { "hooks": [{ "type": "command", "command": "__NODE__ __REPO__/hooks/pause.js tool", "timeout": 10 }] }
+    ]
+  }
+}
